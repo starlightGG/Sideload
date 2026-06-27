@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AltForge — Sideload IPA on iOS Without Jailbreak</title>
+<link rel="icon" href="https://img.icons8.com/fluency/48/iphone.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --bg:#f5f5f7;
+  --card:#fff;
+  --label:#1d1d1f;
+  --secondary:#6e6e73;
+  --tertiary:#aeaeb2;
+  --sep:#d2d2d7;
+  --blue:#0071e3;
+  --blue2:#147ce5;
+  --green:#1d8348;
+  --fill:#e8e8ed;
+}
+
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  color:var(--label);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── LOADER ── */
+#loader{
+  position:fixed;inset:0;background:#fff;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  transition:opacity 0.4s,visibility 0.4s;
+}
+#loader.hidden{opacity:0;visibility:hidden;}
+.loader-icon-wrap{position:relative;}
+.loader-icon{
+  width:80px;height:80px;border-radius:20px;
+  background:linear-gradient(145deg,#1a73e8,#0d47a1);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 28px rgba(26,115,232,0.4);
+}
+.loader-icon img{width:46px;height:46px;filter:brightness(0) invert(1);}
+.loader-name{font-size:1.15rem;font-weight:700;color:#1d1d1f;letter-spacing:-0.01em;}
+.loader-ring{
+  width:32px;height:32px;
+  border:3px solid #e8e8ed;
+  border-top-color:#0071e3;
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-msg{font-size:0.78rem;color:#aeaeb2;letter-spacing:0.01em;}
+
+/* ── SITE WRAPPER ── */
+.page{max-width:760px;margin:0 auto;padding:0 16px 80px;}
+
+/* ── SITE HEADER (no nav) ── */
+.site-header{
+  padding:28px 0 20px;
+  border-bottom:1px solid var(--sep);
+  margin-bottom:24px;
+  display:flex;align-items:center;gap:16px;
+}
+.site-logo-icon{
+  width:52px;height:52px;border-radius:12px;
+  background:linear-gradient(145deg,#1a73e8,#0d47a1);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(26,115,232,0.3);
+  flex-shrink:0;
+}
+.site-logo-icon img{width:30px;height:30px;filter:brightness(0) invert(1);}
+.site-logo-text{
+  font-size:1.4rem;font-weight:700;color:var(--label);letter-spacing:-0.02em;
+}
+.site-logo-tag{
+  font-size:0.7rem;color:var(--secondary);margin-top:2px;font-weight:400;
+}
+
+/* ── HERO CARD ── */
+.hero-card{
+  background:var(--card);
+  border-radius:16px;
+  padding:24px;
+  margin-bottom:16px;
+  border:1px solid var(--sep);
+}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#e8f4fd;color:#0071e3;
+  font-size:0.7rem;font-weight:600;letter-spacing:0.05em;
+  text-transform:uppercase;padding:3px 9px;border-radius:20px;
+  margin-bottom:14px;
+}
+
+.hero-card h1{
+  font-size:1.5rem;font-weight:700;
+  line-height:1.2;letter-spacing:-0.02em;
+  margin-bottom:10px;
+}
+
+.hero-card p{
+  font-size:0.9rem;color:var(--secondary);
+  line-height:1.65;margin-bottom:20px;
+}
+
+.dl-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--blue);color:#fff;
+  font-size:0.9rem;font-weight:600;
+  padding:10px 22px;border-radius:980px;
+  text-decoration:none;border:none;cursor:pointer;
+  transition:background 0.15s,transform 0.1s;
+}
+.dl-btn:hover{background:var(--blue2);transform:translateY(-1px);}
+.dl-btn svg{width:16px;height:16px;}
+
+.hero-meta{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid var(--sep);
+  display:flex;gap:24px;flex-wrap:wrap;
+}
+.hero-meta-item{font-size:0.75rem;color:var(--secondary);}
+.hero-meta-item strong{color:var(--label);display:block;font-size:0.82rem;margin-bottom:1px;}
+
+/* ── SECTION LABELS ── */
+.section-label{
+  font-size:0.65rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--secondary);
+  margin-bottom:10px;margin-top:28px;
+  padding:0 4px;
+}
+
+/* ── APP LIST CARD ── */
+.card{
+  background:var(--card);
+  border-radius:14px;
+  border:1px solid var(--sep);
+  overflow:hidden;
+  margin-bottom:16px;
+}
+
+.app-row{
+  display:flex;align-items:center;gap:13px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--sep);
+  cursor:pointer;
+  transition:background 0.12s;
+}
+.app-row:last-child{border-bottom:none;}
+.app-row:hover{background:#fafafa;}
+
+.app-icon{
+  width:52px;height:52px;border-radius:12px;
+  flex-shrink:0;
+  object-fit:cover;
+  border:0.5px solid rgba(0,0,0,0.1);
+}
+
+.app-info{flex:1;min-width:0;}
+.app-name{font-size:0.9rem;font-weight:600;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.app-sub{font-size:0.75rem;color:var(--secondary);}
+.app-stars{font-size:0.7rem;color:var(--tertiary);margin-top:2px;}
+
+.get-btn{
+  background:var(--fill);color:var(--blue);
+  font-size:0.8rem;font-weight:700;
+  padding:5px 15px;border-radius:20px;
+  border:none;cursor:pointer;flex-shrink:0;
+  transition:background 0.12s;
+}
+.get-btn:hover{background:#ddd;}
+
+/* ── GUIDE CARD ── */
+.guide-card{
+  background:var(--card);
+  border-radius:14px;
+  border:1px solid var(--sep);
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.guide-card h3{
+  font-size:0.95rem;font-weight:600;margin-bottom:14px;
+}
+
+.steps-list{display:flex;flex-direction:column;gap:12px;}
+.step{display:flex;gap:12px;align-items:flex-start;}
+.step-num{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--blue);color:#fff;
+  font-size:0.7rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  margin-top:1px;
+}
+.step-text{font-size:0.82rem;color:var(--secondary);line-height:1.5;}
+.step-text strong{color:var(--label);}
+
+/* ── COMPAT TABLE ── */
+.compat-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid var(--sep);
+  font-size:0.82rem;
+}
+.compat-row:last-child{border-bottom:none;}
+.compat-label{color:var(--label);font-weight:500;}
+.compat-badge{
+  font-size:0.72rem;font-weight:600;padding:3px 9px;border-radius:20px;
+}
+.compat-yes{background:#d5f0e0;color:var(--green);}
+.compat-no{background:#fde8e8;color:#c0392b;}
+.compat-partial{background:#fef3e2;color:#b7640a;}
+
+/* ── CHANGELOG ── */
+.changelog-item{
+  padding:14px 16px;border-bottom:1px solid var(--sep);
+  font-size:0.82rem;
+}
+.changelog-item:last-child{border-bottom:none;}
+.changelog-ver{font-weight:700;font-size:0.85rem;margin-bottom:2px;}
+.changelog-date{font-size:0.72rem;color:var(--tertiary);margin-bottom:6px;}
+.changelog-notes{color:var(--secondary);line-height:1.6;}
+
+/* ── FOOTER ── */
+.site-footer{
+  margin-top:40px;padding-top:24px;border-top:1px solid var(--sep);
+  font-size:0.75rem;color:var(--tertiary);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+}
+.site-footer a{color:var(--tertiary);text-decoration:none;}
+.site-footer a:hover{color:var(--secondary);}
+
+/* ── INSTALL SHEET ── */
+#sheet{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,0.45);
+  backdrop-filter:blur(8px);
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.25s;
+}
+#sheet.show{opacity:1;pointer-events:all;}
+
+.sheet-body{
+  background:#fff;border-radius:20px 20px 0 0;
+  padding:20px 22px 44px;
+  width:100%;max-width:480px;
+  transform:translateY(100%);
+  transition:transform 0.38s cubic-bezier(0.16,1,0.3,1);
+}
+#sheet.show .sheet-body{transform:translateY(0);}
+
+.sheet-handle{
+  width:36px;height:4px;border-radius:99px;
+  background:#e5e5ea;margin:0 auto 20px;
+}
+
+.sheet-app{
+  display:flex;align-items:center;gap:14px;margin-bottom:22px;
+}
+.sheet-app-icon{
+  width:60px;height:60px;border-radius:14px;
+  background:linear-gradient(145deg,#1a73e8,#0d47a1);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(26,115,232,0.3);
+  flex-shrink:0;
+}
+.sheet-app-icon img{width:34px;height:34px;filter:brightness(0) invert(1);}
+.sheet-app-name{font-size:1.05rem;font-weight:700;}
+.sheet-app-ver{font-size:0.78rem;color:#6e6e73;margin-top:2px;}
+
+.prog-row{display:flex;justify-content:space-between;font-size:0.78rem;color:#6e6e73;margin-bottom:7px;}
+.prog-track{height:6px;background:#e8e8ed;border-radius:99px;overflow:hidden;margin-bottom:20px;}
+.prog-fill{height:100%;width:0%;background:linear-gradient(90deg,#1a73e8,#5e5ce6);border-radius:99px;transition:width 0.08s linear;}
+
+.sheet-steps{display:flex;flex-direction:column;gap:11px;}
+.sheet-step{display:flex;align-items:center;gap:11px;font-size:0.84rem;color:#6e6e73;}
+.s-dot{
+  width:22px;height:22px;border-radius:50%;
+  background:#e8e8ed;color:#aeaeb2;
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:background 0.25s,color 0.25s;
+}
+.s-dot.done{background:#30d158;color:#fff;}
+.s-dot.active{background:#0071e3;color:#fff;animation:pulse 0.9s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,113,227,0.4);}50%{box-shadow:0 0 0 5px rgba(0,113,227,0);}}
+
+/* ── REVEAL ── */
+#curtain{position:fixed;inset:0;background:#0a0a0f;z-index:8888;opacity:0;pointer-events:none;}
+#curtain.active{pointer-events:all;animation:goBlack 0.7s cubic-bezier(0.4,0,1,1) forwards;}
+@keyframes goBlack{to{opacity:1;}}
+
+#reveal{
+  position:fixed;inset:0;z-index:8889;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;
+}
+#reveal.active{animation:fadeIn 0.5s 0.55s ease forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+
+.rglow{
+  position:fixed;width:700px;height:700px;border-radius:50%;
+  background:radial-gradient(circle,rgba(26,115,232,0.18) 0%,transparent 70%);
+  filter:blur(60px);pointer-events:none;
+}
+
+.wg{
+  font-family:-apple-system,'Inter',sans-serif;
+  font-size:clamp(4rem,14vw,11rem);
+  font-weight:800;letter-spacing:-0.04em;line-height:0.95;
+  color:#fff;clip-path:inset(0 100% 0 0);
+}
+.wg.go{animation:rR 0.65s cubic-bezier(0.16,1,0.3,1) forwards;}
+
+.ww{
+  font-family:-apple-system,'Inter',sans-serif;
+  font-size:clamp(4rem,14vw,11rem);
+  font-weight:300;letter-spacing:0.14em;line-height:0.95;
+  text-transform:uppercase;
+  background:linear-gradient(90deg,#1a73e8,#60a5fa,#30d158,#1a73e8);
+  background-size:300%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  clip-path:inset(0 0 0 100%);
+}
+.ww.go{animation:rL 0.65s 0.3s cubic-bezier(0.16,1,0.3,1) forwards,grad 4s 0.95s linear infinite;}
+
+@keyframes rR{to{clip-path:inset(0 0% 0 0);}}
+@keyframes rL{to{clip-path:inset(0 0 0 0%);}}
+@keyframes grad{0%{background-position:0%;}100%{background-position:300%;}}
+
+.rsub{
+  margin-top:26px;font-size:clamp(0.7rem,1.8vw,0.9rem);
+  font-weight:500;letter-spacing:0.35em;text-transform:uppercase;
+  color:rgba(255,255,255,0.3);opacity:0;transform:translateY(10px);
+}
+.rsub.go{animation:sUp 0.5s 0.85s cubic-bezier(0.16,1,0.3,1) forwards;}
+@keyframes sUp{to{opacity:1;transform:translateY(0);}}
+
+.rring{margin-top:42px;width:52px;height:52px;opacity:0;}
+.rring.go{animation:sUp 0.4s 1.3s ease forwards;}
+.rring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.rt{fill:none;stroke:rgba(255,255,255,0.1);stroke-width:3;}
+.rf{fill:none;stroke:#1a73e8;stroke-width:3;stroke-linecap:round;stroke-dasharray:138.2;stroke-dashoffset:0;}
+.rf.go{animation:drain 3.2s 1.7s linear forwards;}
+@keyframes drain{to{stroke-dashoffset:138.2;}}
+
+#fb{position:fixed;inset:0;background:#0a0a0f;z-index:9000;opacity:0;pointer-events:none;}
+#fb.active{pointer-events:all;animation:goBlack 0.9s ease forwards;}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-icon-wrap">
+    <div class="loader-icon">
+      <img src="https://img.icons8.com/ios-filled/50/iphone.png" alt="">
+    </div>
+  </div>
+  <div class="loader-name">AltForge</div>
+  <div class="loader-ring"></div>
+  <div class="loader-msg" id="lmsg">Connecting to signing server…</div>
+</div>
+
+<!-- INSTALL SHEET -->
+<div id="sheet">
+  <div class="sheet-body">
+    <div class="sheet-handle"></div>
+    <div class="sheet-app">
+      <div class="sheet-app-icon">
+        <img src="https://img.icons8.com/ios-filled/50/iphone.png" alt="">
+      </div>
+      <div>
+        <div class="sheet-app-name">AltForge Installer</div>
+        <div class="sheet-app-ver">Version 3.2.1 · 14.2 MB</div>
+      </div>
+    </div>
+    <div class="prog-row">
+      <span id="stepLabel">Preparing…</span>
+      <span id="pctLabel">0%</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="pFill"></div></div>
+    <div class="sheet-steps">
+      <div class="sheet-step"><div class="s-dot" id="s1">1</div><span>Verifying device trust certificate</span></div>
+      <div class="sheet-step"><div class="s-dot" id="s2">2</div><span>Signing IPA with provisioning profile</span></div>
+      <div class="sheet-step"><div class="s-dot" id="s3">3</div><span>Pushing payload to iOS daemon</span></div>
+      <div class="sheet-step"><div class="s-dot" id="s4">4</div><span>Installing on device…</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CURTAIN + REVEAL -->
+<div id="curtain"></div>
+<div id="reveal">
+  <div class="rglow"></div>
+  <div>
+    <div class="wg" id="wg">GUESS</div>
+    <div class="ww" id="ww">WHAT</div>
+  </div>
+  <div class="rsub" id="rs">you just got got</div>
+  <div class="rring" id="rr">
+    <svg viewBox="0 0 48 48">
+      <circle class="rt" cx="24" cy="24" r="22"/>
+      <circle class="rf" id="rf" cx="24" cy="24" r="22"/>
+    </svg>
+  </div>
+</div>
+<div id="fb"></div>
+
+<!-- PAGE CONTENT -->
+<div class="page">
+
+  <div class="site-header">
+    <div class="site-logo-icon">
+      <img src="https://img.icons8.com/ios-filled/50/iphone.png" alt="">
+    </div>
+    <div>
+      <div class="site-logo-text">AltForge</div>
+      <div class="site-logo-tag">Free iOS Sideloading Tool · Est. 2021</div>
+    </div>
+  </div>
+
+  <div class="hero-card">
+    <div class="hero-badge">🔓 No jailbreak required</div>
+    <h1>Install any IPA on your iPhone without a PC</h1>
+    <p>AltForge signs and pushes apps directly to your device using a free developer certificate. Works on iOS 14 through 17.6. Over 2.3 million installs worldwide.</p>
+    <button class="dl-btn" id="mainGetBtn">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V3h3v5H12L8 12z"/><rect x="3" y="13" width="10" height="1.5" rx="0.75"/></svg>
+      Download AltForge — Free
+    </button>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><strong>3.2.1</strong>Latest Version</div>
+      <div class="hero-meta-item"><strong>Jun 14, 2026</strong>Updated</div>
+      <div class="hero-meta-item"><strong>iOS 14–17.6</strong>Compatibility</div>
+      <div class="hero-meta-item"><strong>14.2 MB</strong>Size</div>
+      <div class="hero-meta-item"><strong>Free</strong>Price</div>
+    </div>
+  </div>
+
+  <div class="section-label">Featured Apps</div>
+  <div class="card">
+    <div class="app-row" onclick="triggerInstall()">
+      <img class="app-icon" src="https://img.icons8.com/color/96/delta-emulator.png" onerror="this.src='https://img.icons8.com/fluency/96/controller.png'" alt="Delta">
+      <div class="app-info">
+        <div class="app-name">Delta Emulator</div>
+        <div class="app-sub">Games · NES, SNES, N64, GBA, DS</div>
+        <div class="app-stars">★★★★★ &nbsp;48,291 ratings</div>
+      </div>
+      <button class="get-btn">GET</button>
+    </div>
+    <div class="app-row" onclick="triggerInstall()">
+      <img class="app-icon" src="https://img.icons8.com/color/96/youtube-play.png" alt="YouTube">
+      <div class="app-info">
+        <div class="app-name">uYou+ 3.0</div>
+        <div class="app-sub">Entertainment · YouTube Tweaked</div>
+        <div class="app-stars">★★★★☆ &nbsp;31,744 ratings</div>
+      </div>
+      <button class="get-btn">GET</button>
+    </div>
+    <div class="app-row" onclick="triggerInstall()">
+      <img class="app-icon" src="https://img.icons8.com/color/96/spotify--v1.png" alt="Spotify">
+      <div class="app-info">
+        <div class="app-name">Spotilife++ </div>
+        <div class="app-sub">Music · Spotify Premium Tweaked</div>
+        <div class="app-stars">★★★★☆ &nbsp;22,108 ratings</div>
+      </div>
+      <button class="get-btn">GET</button>
+    </div>
+    <div class="app-row" onclick="triggerInstall()">
+      <img class="app-icon" src="https://img.icons8.com/color/96/instagram-new--v1.png" alt="Instagram">
+      <div class="app-info">
+        <div class="app-name">IG++ Rocket</div>
+        <div class="app-sub">Social · Instagram Tweaked</div>
+        <div class="app-stars">★★★★☆ &nbsp;17,503 ratings</div>
+      </div>
+      <button class="get-btn">GET</button>
+    </div>
+    <div class="app-row" onclick="triggerInstall()">
+      <img class="app-icon" src="https://img.icons8.com/color/96/snapchat.png" alt="Snap">
+      <div class="app-info">
+        <div class="app-name">Snapchat++ Plus</div>
+        <div class="app-sub">Social · Snap Tweaked</div>
+        <div class="app-stars">★★★★☆ &nbsp;14,219 ratings</div>
+      </div>
+      <button class="get-btn">GET</button>
+    </div>
+  </div>
+
+  <div class="section-label">How to install</div>
+  <div class="guide-card">
+    <h3>Setup guide — takes about 2 minutes</h3>
+    <div class="steps-list">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Tap <strong>Download AltForge</strong> above and allow the profile to install in Settings → General → VPN &amp; Device Management.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Open AltForge, sign in with any Apple ID (a burner works fine — your credentials are never stored).</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Tap <strong>+</strong> and choose an IPA file from Files, or browse the built-in source above and tap GET.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">AltForge signs and installs the app automatically. Apps re-sign every 7 days in the background — no action needed.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Compatibility</div>
+  <div class="card">
+    <div class="compat-row"><span class="compat-label">iOS 17.0 – 17.6</span><span class="compat-badge compat-yes">✓ Supported</span></div>
+    <div class="compat-row"><span class="compat-label">iOS 16.x</span><span class="compat-badge compat-yes">✓ Supported</span></div>
+    <div class="compat-row"><span class="compat-label">iOS 15.x</span><span class="compat-badge compat-yes">✓ Supported</span></div>
+    <div class="compat-row"><span class="compat-label">iOS 14.x</span><span class="compat-badge compat-yes">✓ Supported</span></div>
+    <div class="compat-row"><span class="compat-label">iOS 18.x</span><span class="compat-badge compat-partial">⚠ Limited (beta)</span></div>
+    <div class="compat-row"><span class="compat-label">iOS 13 and below</span><span class="compat-badge compat-no">✗ Not supported</span></div>
+  </div>
+
+  <div class="section-label">Changelog</div>
+  <div class="card">
+    <div class="changelog-item">
+      <div class="changelog-ver">3.2.1</div>
+      <div class="changelog-date">June 14, 2026</div>
+      <div class="changelog-notes">Fixed re-sign loop on iOS 17.5.1 · Improved certificate rotation logic · Reduced background battery usage</div>
+    </div>
+    <div class="changelog-item">
+      <div class="changelog-ver">3.2.0</div>
+      <div class="changelog-date">May 3, 2026</div>
+      <div class="changelog-notes">Added beta support for iOS 18 · New source browser UI · Fixed crash on iPads running Stage Manager</div>
+    </div>
+    <div class="changelog-item">
+      <div class="changelog-ver">3.1.4</div>
+      <div class="changelog-date">March 19, 2026</div>
+      <div class="changelog-notes">Hotfix for Apple certificate revocation wave · Added fallback signing server</div>
+    </div>
+  </div>
+
+  <div class="site-footer">
+    <span>© 2026 AltForge. Not affiliated with Apple Inc.</span>
+    <span>
+      <a href="#">Privacy</a> &nbsp;·&nbsp;
+      <a href="#">Terms</a> &nbsp;·&nbsp;
+      <a href="#">Discord</a> &nbsp;·&nbsp;
+      <a href="#">GitHub</a>
+    </span>
+  </div>
+</div>
+
+<script>
+// Loader
+const msgs = ['Connecting to signing server…','Fetching certificate pool…','Loading app sources…','Ready.'];
+let mi = 0;
+const lmsg = document.getElementById('lmsg');
+const msgTimer = setInterval(() => { if(++mi < msgs.length) lmsg.textContent = msgs[mi]; }, 650);
+setTimeout(() => { clearInterval(msgTimer); document.getElementById('loader').classList.add('hidden'); }, 2800);
+
+// Install trigger
+function triggerInstall() {
+  document.getElementById('sheet').classList.add('show');
+  runInstall();
+}
+document.getElementById('mainGetBtn').addEventListener('click', triggerInstall);
+
+const STEPS = [
+  { id:'s1', label:'Verifying device trust…',    end:24 },
+  { id:'s2', label:'Signing IPA…',               end:56 },
+  { id:'s3', label:'Pushing to iOS daemon…',     end:80 },
+  { id:'s4', label:'Installing on device…',      end:100 },
+];
+
+function runInstall() {
+  const fill  = document.getElementById('pFill');
+  const slbl  = document.getElementById('stepLabel');
+  const plbl  = document.getElementById('pctLabel');
+
+  function doStep(i) {
+    if (i >= STEPS.length) { setTimeout(fireReveal, 600); return; }
+    const s = STEPS[i];
+    if (i > 0) {
+      const pd = document.getElementById(STEPS[i-1].id);
+      pd.classList.remove('active'); pd.classList.add('done'); pd.textContent = '✓';
+    }
+    document.getElementById(s.id).classList.add('active');
+    slbl.textContent = s.label;
+    const from = i === 0 ? 0 : STEPS[i-1].end;
+    const to   = s.end;
+    const dur  = i === 3 ? 1100 : 900;
+    const t0   = performance.now();
+    (function tick(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      const e = 1 - Math.pow(1-p, 3);
+      const v = Math.round(from + (to-from)*e);
+      fill.style.width = v + '%';
+      plbl.textContent = v + '%';
+      if (p < 1) requestAnimationFrame(tick);
+      else setTimeout(() => doStep(i+1), 280);
+    })(t0);
+  }
+  doStep(0);
+}
+
+function fireReveal() {
+  document.getElementById('curtain').classList.add('active');
+  document.getElementById('reveal').classList.add('active');
+  setTimeout(() => {
+    document.getElementById('wg').classList.add('go');
+    document.getElementById('ww').classList.add('go');
+    document.getElementById('rs').classList.add('go');
+    document.getElementById('rr').classList.add('go');
+    document.getElementById('rf').classList.add('go');
+  }, 700);
+  setTimeout(() => document.getElementById('fb').classList.add('active'), 5700);
+  setTimeout(() => { window.close(); }, 6700);
+}
+</script>
+</body>
+</html>
